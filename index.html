@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#3b82f6" />
   <title>維修自助中心</title>
+  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
   <style>
     :root{
       --blue:#3b82f6;
@@ -249,7 +251,7 @@
           <strong>已恢復正常</strong>
           <small>已完成基本排查，不需要客服協助。</small>
         </button>
-        <button class="choice" onclick="window.open(GOOGLE_FORM_URL,'_blank')">
+        <button class="choice" onclick="showForm()">
           <span class="icon">📷</span>
           <strong>仍無法處理</strong>
           <small>提供型號、照片或影片給客服判斷。</small>
@@ -260,7 +262,7 @@
 
     <section class="panel hidden" id="step4">
       <h2>4. 請提供維修資料</h2>
-      <p>填寫越完整，客服越能快速判斷。照片與影片目前只會顯示在你的裝置上，不會自動上傳到伺服器。</p>
+      <p>填寫完成後送出，案件會直接出現在派工系統的「報修案件」頁面，狀態為「待聯絡」。</p>
 
       <div class="field">
         <label for="customerName">聯絡人姓名</label>
@@ -300,26 +302,19 @@
       </div>
 
       <div class="note" style="margin:14px 0">
-        💡 上面的照片／影片預覽只會顯示在你的裝置上，不會真的送出。請在下方表單裡實際上傳照片／影片給客服。
+        💡 第一版會先送出文字資料與檔案數量；照片與影片仍請透過 LINE 傳送。
       </div>
-      <div class="field">
-        <label>📎 上傳照片／影片給客服</label>
-        <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff">
-          <iframe id="googleFormFrame" src="" width="100%" height="820" frameborder="0" style="display:block">載入中…</iframe>
-        </div>
-      </div>
-
       <div class="actions">
         <button class="btn outline" onclick="goBack(3)">返回</button>
-        <button class="btn primary" onclick="buildSummary()">產生客服案件摘要</button>
+        <button class="btn primary" id="submitRepairBtn" onclick="submitRepairRequest()">送出維修案件</button>
       </div>
     </section>
 
     <section class="panel hidden" id="step5">
       <div class="success">
         <div class="big">🧾</div>
-        <h2>案件資料已整理完成</h2>
-        <p>請先複製摘要，再透過 LINE 傳送給客服；照片與影片需另外在 LINE 對話中上傳。</p>
+        <h2>案件已成功送出</h2>
+        <p>客服將依序聯絡你。照片與影片仍請另外透過 LINE 傳送。</p>
       </div>
       <div class="summary" id="summary"></div>
       <div class="actions">
@@ -624,15 +619,27 @@
     }
     showOnly("step3");
   }
-  const GOOGLE_FORM_URL = "https://forms.gle/wmQPhgeobzSC7dCf7";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoHSyZU6Y6xYuddGKQl_5mQm2p4ETxY5A",
+    authDomain: "dispatching-386da.firebaseapp.com",
+    projectId: "dispatching-386da",
+    storageBucket: "dispatching-386da.firebasestorage.app",
+    messagingSenderId: "79344587250",
+    appId: "1:79344587250:web:55ee46a4769ca4ae52db6b"
+  };
+
+  let repairDb = null;
+  try{
+    const app = firebase.apps && firebase.apps.length
+      ? firebase.app()
+      : firebase.initializeApp(firebaseConfig);
+    repairDb = firebase.firestore(app);
+  }catch(err){
+    console.error("Firebase 初始化失敗", err);
+  }
 
   function showForm(){
     showOnly("step4");
-    const frame=document.getElementById("googleFormFrame");
-    if(!frame.src){
-      const embedUrl = GOOGLE_FORM_URL.includes("?") ? GOOGLE_FORM_URL+"&embedded=true" : GOOGLE_FORM_URL+"?embedded=true";
-      frame.src = embedUrl;
-    }
   }
   function finishSolved(){ showOnly("solved"); }
 
@@ -661,7 +668,70 @@
 
   function val(id){ return document.getElementById(id).value.trim() || "未填寫"; }
 
-  function buildSummary(){
+  async function submitRepairRequest(){
+    const name = document.getElementById("customerName").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    if(!name || !phone){
+      alert("請至少填寫聯絡人姓名與聯絡電話。");
+      return;
+    }
+    if(!repairDb){
+      alert("系統尚未成功連線，請重新整理後再試。");
+      return;
+    }
+
+    const btn = document.getElementById("submitRepairBtn");
+    btn.disabled = true;
+    btn.textContent = "送出中…";
+
+    try{
+      const issue = issues[selectedIssue] || {icon:"🔧", title:"其他問題"};
+      const checks = [...document.querySelectorAll('#checklist input[type="checkbox"]:checked')].length;
+      const total = [...document.querySelectorAll('#checklist input[type="checkbox"]')].length;
+
+      let errorCode = "";
+      const errYes = document.querySelector('input[name="errorCodeQ"][value="yes"]:checked');
+      const errNo = document.querySelector('input[name="errorCodeQ"][value="no"]:checked');
+      if(errYes){
+        const sel = document.getElementById("errorCodeSelect");
+        errorCode = sel ? sel.value : "";
+      }else if(errNo){
+        errorCode = "無顯示錯誤代碼";
+      }
+
+      const ref = await repairDb.collection("repairRequests").add({
+        status: "待聯絡",
+        issueType: issue.title,
+        issueIcon: issue.icon,
+        customerName: name,
+        phone,
+        model: document.getElementById("model").value.trim(),
+        serial: document.getElementById("serial").value.trim(),
+        location: document.getElementById("location").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        errorCode,
+        checksDone: checks,
+        checksTotal: total,
+        photoCount: document.getElementById("photos").files.length,
+        videoCount: document.getElementById("videos").files.length,
+        source: "維修自助中心",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAtText: new Date().toLocaleString("zh-TW", {hour12:false}),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      buildSummary(ref.id);
+    }catch(err){
+      console.error(err);
+      alert("送出失敗：" + err.message + "。請確認 Firestore 規則已加入 repairRequests 權限。");
+    }finally{
+      btn.disabled = false;
+      btn.textContent = "送出維修案件";
+    }
+  }
+
+  function buildSummary(caseId=""){
     const issue=issues[selectedIssue];
     const photoCount=document.getElementById("photos").files.length;
     const videoCount=document.getElementById("videos").files.length;
@@ -687,7 +757,11 @@
     }
 
     const text =
-`【維修初步檢查資料】
+`【維修案件已送出】
+案件編號：${caseId || "系統建立中"}
+狀態：待聯絡
+
+【維修初步檢查資料】
 
 故障類型：${issue.icon} ${issue.title}
 聯絡人：${val("customerName")}
