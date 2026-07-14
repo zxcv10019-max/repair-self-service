@@ -302,8 +302,9 @@
       </div>
 
       <div class="note" style="margin:14px 0">
-        💡 第一版會先送出文字資料與檔案數量；照片與影片仍請透過 LINE 傳送。
+        💡 照片與影片會上傳至公司的 Google Drive，送出完成前請不要關閉頁面。
       </div>
+      <div id="uploadProgress" class="note hidden" style="margin-top:14px;background:#eaf2fe;color:#2563eb"></div>
       <div class="actions">
         <button class="btn outline" onclick="goBack(3)">返回</button>
         <button class="btn primary" id="submitRepairBtn" onclick="submitRepairRequest()">送出維修案件</button>
@@ -668,23 +669,99 @@
 
   function val(id){ return document.getElementById(id).value.trim() || "未填寫"; }
 
+
+  // 貼上 Google Apps Script 部署後的「網頁應用程式網址」
+  const DRIVE_UPLOAD_API = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+  function setUploadProgress(text, show=true){
+    const el = document.getElementById("uploadProgress");
+    if(!el) return;
+    el.textContent = text;
+    el.classList.toggle("hidden", !show);
+  }
+
+  function fileToBase64(file){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=> {
+        const result = String(reader.result || "");
+        resolve(result.includes(",") ? result.split(",")[1] : result);
+      };
+      reader.onerror = ()=>reject(reader.error || new Error("讀取檔案失敗"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadOneFileToDrive(caseId, file, category){
+    if(!DRIVE_UPLOAD_API || DRIVE_UPLOAD_API.includes("PASTE_YOUR")){
+      throw new Error("尚未設定 Google Apps Script 網頁應用程式網址");
+    }
+
+    // Apps Script 傳輸限制：單檔建議控制在 30MB 內
+    const max = category === "photo" ? 10 * 1024 * 1024 : 30 * 1024 * 1024;
+    if(file.size > max){
+      throw new Error(`${file.name} 太大。照片上限 10MB，影片上限 30MB。`);
+    }
+
+    const base64 = await fileToBase64(file);
+    const response = await fetch(DRIVE_UPLOAD_API, {
+      method: "POST",
+      redirect: "follow",
+      headers: {"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({
+        action: "upload",
+        caseId,
+        category,
+        fileName: file.name,
+        mimeType: file.type || "application/octet-stream",
+        base64
+      })
+    });
+
+    const text = await response.text();
+    let result;
+    try{ result = JSON.parse(text); }
+    catch(e){ throw new Error("上傳服務回傳格式錯誤：" + text.slice(0,120)); }
+
+    if(!result.ok) throw new Error(result.error || "Google Drive 上傳失敗");
+    return result.file;
+  }
+
+  async function uploadFilesToDrive(caseId, files, category){
+    const output = [];
+    for(let i=0;i<files.length;i++){
+      const file = files[i];
+      setUploadProgress(`正在上傳${category === "photo" ? "照片" : "影片"} ${i+1}/${files.length}：${file.name}`);
+      output.push(await uploadOneFileToDrive(caseId, file, category));
+    }
+    return output;
+  }
+
   async function submitRepairRequest(){
     const name = document.getElementById("customerName").value.trim();
     const phone = document.getElementById("phone").value.trim();
+    const photos = [...document.getElementById("photos").files];
+    const videos = [...document.getElementById("videos").files];
 
     if(!name || !phone){
       alert("請至少填寫聯絡人姓名與聯絡電話。");
       return;
     }
     if(!repairDb){
-      alert("系統尚未成功連線，請重新整理後再試。");
+      alert("Firestore 尚未連線，請重新整理後再試。");
+      return;
+    }
+    if(DRIVE_UPLOAD_API.includes("PASTE_YOUR")){
+      alert("尚未設定 Google Apps Script 網頁應用程式網址。");
       return;
     }
 
     const btn = document.getElementById("submitRepairBtn");
     btn.disabled = true;
     btn.textContent = "送出中…";
+    setUploadProgress("正在建立報修案件…");
 
+    let ref = null;
     try{
       const issue = issues[selectedIssue] || {icon:"🔧", title:"其他問題"};
       const checks = [...document.querySelectorAll('#checklist input[type="checkbox"]:checked')].length;
@@ -700,8 +777,14 @@
         errorCode = "無顯示錯誤代碼";
       }
 
-      const ref = await repairDb.collection("repairRequests").add({
+      ref = repairDb.collection("repairRequests").doc();
+      const caseNo = "R" + new Date().toISOString().slice(0,10).replaceAll("-","")
+        + "-" + ref.id.slice(0,6).toUpperCase();
+
+      await ref.set({
+        caseNo,
         status: "待聯絡",
+        uploadStatus: photos.length || videos.length ? "上傳中" : "無附件",
         issueType: issue.title,
         issueIcon: issue.icon,
         customerName: name,
@@ -713,18 +796,43 @@
         errorCode,
         checksDone: checks,
         checksTotal: total,
-        photoCount: document.getElementById("photos").files.length,
-        videoCount: document.getElementById("videos").files.length,
+        photoCount: photos.length,
+        videoCount: videos.length,
+        photoFiles: [],
+        videoFiles: [],
         source: "維修自助中心",
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         createdAtText: new Date().toLocaleString("zh-TW", {hour12:false}),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      buildSummary(ref.id);
+      const photoFiles = await uploadFilesToDrive(caseNo, photos, "photo");
+      const videoFiles = await uploadFilesToDrive(caseNo, videos, "video");
+
+      await ref.update({
+        photoFiles,
+        videoFiles,
+        photoUrls: photoFiles.map(x=>x.thumbnailUrl || x.viewUrl),
+        videoUrls: videoFiles.map(x=>x.viewUrl),
+        uploadStatus: "完成",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      setUploadProgress("✅ 案件與附件已成功送出");
+      buildSummary(caseNo);
     }catch(err){
       console.error(err);
-      alert("送出失敗：" + err.message + "。請確認 Firestore 規則已加入 repairRequests 權限。");
+      if(ref){
+        try{
+          await ref.update({
+            uploadStatus: "失敗",
+            uploadError: String(err.message || err),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }catch(_){}
+      }
+      setUploadProgress("❌ 送出失敗：" + err.message);
+      alert("送出失敗：" + err.message);
     }finally{
       btn.disabled = false;
       btn.textContent = "送出維修案件";
