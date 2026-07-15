@@ -277,7 +277,32 @@
       </div>
       <div class="field">
         <label for="model">主機型號</label>
-        <input id="model" placeholder="例如：GD600">
+        <select id="model">
+          <option value="">請選擇機型</option>
+          <option value="GD600（雙溫）">GD600（雙溫）</option>
+          <option value="GD800（三溫）">GD800（三溫）</option>
+          <option value="GD SODA（氣泡水機）">GD SODA（氣泡水機）</option>
+          <option value="GD TWINKLE（落地型氣泡水機）">GD TWINKLE（落地型氣泡水機）</option>
+          <option value="GD SOLO（落地型三溫）">GD SOLO（落地型三溫）</option>
+          <option value="GD CROSS（雙溫）">GD CROSS（雙溫）</option>
+          <option value="GD CROSSIII（三溫）">GD CROSSIII（三溫）</option>
+          <option value="IK SMILE（機械雙溫／黑色）">IK SMILE（機械雙溫／黑色）</option>
+          <option value="IK BEAUTY（機械雙溫／舊款彩色）">IK BEAUTY（機械雙溫／舊款彩色）</option>
+          <option value="未搭配加熱器（只有濾心／淨水器－常溫水）">未搭配加熱器（只有濾心／淨水器－常溫水）</option>
+          <option value="不明（請拍照）">不明（請拍照）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="purifier">搭配淨水器（濾心）</label>
+        <select id="purifier">
+          <option value="">請選擇淨水器／濾心</option>
+          <option value="標準宮黛三道">標準宮黛三道</option>
+          <option value="IZERO宮黛RO機">IZERO宮黛RO機</option>
+          <option value="愛惠浦濾心">愛惠浦濾心</option>
+          <option value="BRITA">BRITA</option>
+          <option value="傳統RO機">傳統RO機</option>
+          <option value="不明（請拍照）">不明（請拍照）</option>
+        </select>
       </div>
       <div class="field">
         <label for="serial">機器序號 *</label>
@@ -923,6 +948,7 @@
         customerName: name,
         phone,
         model: document.getElementById("model").value.trim(),
+        purifier: document.getElementById("purifier").value.trim(),
         serial: document.getElementById("serial").value.trim(),
         location: document.getElementById("location").value.trim(),
         description: document.getElementById("description").value.trim(),
@@ -1018,6 +1044,7 @@
 聯絡人：${val("customerName")}
 聯絡電話：${val("phone")}
 主機型號：${val("model")}
+搭配淨水器：${val("purifier")}
 機器序號：${val("serial")}
 安裝地址：${val("location")}${errorCodeLine}
 
@@ -1057,6 +1084,7 @@ ${val("description")}
       if(el.type==="checkbox") el.checked=false;
       else el.value="";
     });
+    document.querySelectorAll("select").forEach(el=>{ el.selectedIndex=0; });
     document.getElementById("photoPreview").innerHTML="";
     document.getElementById("videoPreview").innerHTML="";
     showOnly("step1");
