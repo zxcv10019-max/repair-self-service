@@ -379,14 +379,17 @@
           <option value="其他濾芯／不明（需要拍照）">其他濾芯／不明（需要拍照）</option>
         </select>
       </div>
+      <div class="field" style="margin-bottom:4px">
+        <label style="display:block">機器序號（製造序號）／客戶代號 * <span style="color:var(--blue-dark);font-weight:700">兩者擇一填寫即可，未填寫將無法報修/出工，請務必填寫其中一項</span></label>
+      </div>
       <div class="field">
-        <label for="serial">機器序號 * <span style="color:var(--blue-dark);font-weight:700">未填機器序號無法報修/出工，請務必填寫</span></label>
+        <label for="serial">機器序號（製造序號）</label>
         <input id="serial" placeholder="請查看主機側面或背面貼紙">
         <div class="example-link" onclick="openGallery(SERIAL_EXAMPLE_IMAGES, '機器序號（製造序號）範例')">機器序號（製造序號）範例</div>
       </div>
       <div class="field">
         <label for="custCode">客戶代號</label>
-        <input id="custCode" placeholder="請查看保固卡或用戶服務卡上的代號">
+        <input id="custCode" placeholder="有客戶代號可直接填寫，不用再填機器序號">
         <div class="example-link" onclick="openGallery(CUSTCODE_EXAMPLE_IMAGES, '客戶代號範例')">客戶代號範例</div>
       </div>
       <div class="field">
@@ -1132,6 +1135,7 @@
     const name = document.getElementById("customerName").value.trim();
     const phone = document.getElementById("phone").value.trim();
     const serial = document.getElementById("serial").value.trim();
+    const custCode = document.getElementById("custCode").value.trim();
     const photos = [...document.getElementById("photos").files];
     const videos = [...document.getElementById("videos").files];
 
@@ -1139,8 +1143,8 @@
       alert("請至少填寫聯絡人姓名與聯絡電話。");
       return;
     }
-    if(!serial){
-      alert("請填寫機器序號，方便客服確認機型與保固狀態。");
+    if(!serial && !custCode){
+      alert("請填寫機器序號或客戶代號（擇一填寫即可），方便客服確認機型與保固狀態。");
       document.getElementById("serial").focus();
       return;
     }
