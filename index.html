@@ -275,15 +275,15 @@
       </div>
       <div class="field">
         <label for="model">主機型號</label>
-        <input id="model" placeholder="例如：ABC-123">
+        <input id="model" placeholder="例如：GD600">
       </div>
       <div class="field">
-        <label for="serial">機器序號</label>
+        <label for="serial">機器序號 *</label>
         <input id="serial" placeholder="請查看主機側面或背面貼紙">
       </div>
       <div class="field">
-        <label for="location">故障位置／場所</label>
-        <input id="location" placeholder="例如：公司茶水間、住家廚房">
+        <label for="location">安裝地址</label>
+        <input id="location" placeholder="例如：台北市中山區OO路OO號OO樓">
       </div>
       <div class="field">
         <label for="description">故障描述</label>
@@ -305,6 +305,9 @@
       <div class="note" style="margin:14px 0">
         💡 照片與影片會上傳至公司的 Google Drive，送出完成前請不要關閉頁面。
       </div>
+      <div class="note" style="margin:0 0 14px">
+        📱 送出後客服會優先透過 LINE@ 與您聯繫，請留意 LINE 訊息。
+      </div>
       <div id="uploadProgress" class="note hidden" style="margin-top:14px;background:#eaf2fe;color:#2563eb"></div>
       <div class="actions">
         <button class="btn outline" onclick="goBack(3)">返回</button>
@@ -316,12 +319,12 @@
       <div class="success">
         <div class="big">🧾</div>
         <h2>案件已成功送出</h2>
-        <p>客服將依序聯絡你，照片與影片已隨案件一併送出。</p>
+        <p>客服會優先透過 LINE@ 與你聯繫，即將自動為你開啟 LINE@，若沒有自動跳轉請按下方按鈕。</p>
       </div>
       <div class="summary" id="summary"></div>
       <div class="actions">
         <button class="btn primary" onclick="copySummary()">複製案件摘要</button>
-        <a class="btn outline" id="lineBtn" href="https://line.me/R/ti/p/@YOUR_LINE_ID" target="_blank" rel="noopener">開啟 LINE 客服</a>
+        <a class="btn outline" id="lineBtn" href="https://lin.ee/vAaW0UF" target="_blank" rel="noopener">前往 LINE@ 客服</a>
         <button class="btn" onclick="restart()">重新填寫</button>
       </div>
     </section>
@@ -715,6 +718,9 @@
   function val(id){ return document.getElementById(id).value.trim() || "未填寫"; }
 
 
+  // 送出成功後導向的 LINE@ 官方帳號連結
+  const LINE_OA_URL = "https://lin.ee/vAaW0UF";
+
   // 貼上 Google Apps Script 部署後的「網頁應用程式網址」
   const DRIVE_UPLOAD_API = "https://script.google.com/macros/s/AKfycbzbgkIyxdA5k4LmPHQxcEwwtdCV0fdNZKCOaI-j7GPvWkGTJujjP3Vkpah6smJ6rFQ/exec";
 
@@ -835,11 +841,17 @@
   async function submitRepairRequest(){
     const name = document.getElementById("customerName").value.trim();
     const phone = document.getElementById("phone").value.trim();
+    const serial = document.getElementById("serial").value.trim();
     const photos = [...document.getElementById("photos").files];
     const videos = [...document.getElementById("videos").files];
 
     if(!name || !phone){
       alert("請至少填寫聯絡人姓名與聯絡電話。");
+      return;
+    }
+    if(!serial){
+      alert("請填寫機器序號，方便客服確認機型與保固狀態。");
+      document.getElementById("serial").focus();
       return;
     }
     if(!repairDb){
@@ -914,8 +926,9 @@
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      setUploadProgress("✅ 案件與附件已成功送出");
+      setUploadProgress("✅ 案件與附件已成功送出，即將前往 LINE@ 客服…");
       buildSummary(caseNo);
+      setTimeout(()=>{ window.location.href = LINE_OA_URL; }, 1500);
     }catch(err){
       console.error(err);
       if(ref){
@@ -973,16 +986,14 @@
 聯絡電話：${val("phone")}
 主機型號：${val("model")}
 機器序號：${val("serial")}
-故障位置：${val("location")}${errorCodeLine}
+安裝地址：${val("location")}${errorCodeLine}
 
 故障描述：
 ${val("description")}
 
 已完成自助檢查：${checks}/${total} 項
 準備提供照片：${photoCount} 張
-準備提供影片：${videoCount} 支
-
-※ 照片與影片請另外在 LINE 對話中傳送。`;
+準備提供影片：${videoCount} 支`;
 
     document.getElementById("summary").textContent=text;
     showOnly("step5");
