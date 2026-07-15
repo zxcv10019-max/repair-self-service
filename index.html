@@ -313,6 +313,7 @@
       <div id="uploadProgress" class="note hidden" style="margin-top:14px;background:#eaf2fe;color:#2563eb"></div>
       <div class="actions">
         <button class="btn outline" onclick="goBack(3)">返回</button>
+        <button class="btn outline" onclick="goHome()">返回首頁</button>
         <button class="btn primary" id="submitRepairBtn" onclick="submitRepairRequest()">送出維修案件</button>
       </div>
     </section>
@@ -402,7 +403,7 @@
         "拍攝面板顯示及操作影片。"
       ],
       specialQuestion:{
-        index:1, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10","E11"],
+        index:1, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10","E11","E12"],
         codeDescriptions:{
           E1:"熱水感溫線異常",
           E2:"加熱時間超過60分",
@@ -412,16 +413,20 @@
           E6:"排線異常",
           E7:"低水位未偵測到但高水位有偵測到，低水位開關異常",
           E10:"壓縮機製冷異常",
-          E11:"冰水感溫線異常"
+          E11:"冰水感溫線異常",
+          E12:"溫水感溫線異常"
         },
         codeSolutions:{
-          E1:"重插插頭。",
-          E2:"重插插頭。",
-          E3:"重插插頭 → 檢查進水球閥。",
-          E4:"重插插頭 → 檢查進水球閥。",
-          E6:"重插插頭 → 重插龍頭中繼線。",
-          E10:"重插插頭 → 檢查小 T 是否有髒污。",
-          E11:"重插插頭。"
+          E1:"重插插頭（中間請間隔30秒）。",
+          E2:"重插插頭（中間請間隔30秒）。",
+          E3:"重插插頭（中間請間隔30秒） → 檢查進水球閥。",
+          E4:"重插插頭（中間請間隔30秒） → 檢查進水球閥（水源開啟）。",
+          E5:"請參考首頁漏水排查方法 → 重插插頭（中間請間隔30秒）。",
+          E6:"重插插頭（中間請間隔30秒） → 重插龍頭中繼線。",
+          E7:"重插插頭。",
+          E10:"重插插頭（中間請間隔30秒） → 檢查小 T 是否有髒污。",
+          E11:"重插插頭（中間請間隔30秒）。",
+          E12:"重插插頭（中間請間隔30秒）。"
         }
       },
       powerSavingQuestion:{
@@ -461,7 +466,7 @@
         "拍攝面板近照與重新開機後的完整影片。"
       ],
       specialQuestion:{
-        index:1, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10","E11"],
+        index:1, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10","E11","E12"],
         codeDescriptions:{
           E1:"熱水感溫線異常",
           E2:"加熱時間超過60分",
@@ -471,16 +476,20 @@
           E6:"排線異常",
           E7:"低水位未偵測到但高水位有偵測到，低水位開關異常",
           E10:"壓縮機製冷異常",
-          E11:"冰水感溫線異常"
+          E11:"冰水感溫線異常",
+          E12:"溫水感溫線異常"
         },
         codeSolutions:{
-          E1:"重插插頭。",
-          E2:"重插插頭。",
-          E3:"重插插頭 → 檢查進水球閥。",
-          E4:"重插插頭 → 檢查進水球閥。",
-          E6:"重插插頭 → 重插龍頭中繼線。",
-          E10:"重插插頭 → 檢查小 T 是否有髒污。",
-          E11:"重插插頭。"
+          E1:"重插插頭（中間請間隔30秒）。",
+          E2:"重插插頭（中間請間隔30秒）。",
+          E3:"重插插頭（中間請間隔30秒） → 檢查進水球閥。",
+          E4:"重插插頭（中間請間隔30秒） → 檢查進水球閥（水源開啟）。",
+          E5:"請參考首頁漏水排查方法 → 重插插頭（中間請間隔30秒）。",
+          E6:"重插插頭（中間請間隔30秒） → 重插龍頭中繼線。",
+          E7:"重插插頭。",
+          E10:"重插插頭（中間請間隔30秒） → 檢查小 T 是否有髒污。",
+          E11:"重插插頭（中間請間隔30秒）。",
+          E12:"重插插頭（中間請間隔30秒）。"
         }
       }
     },
@@ -931,13 +940,20 @@
       });
 
       isUploadingMedia = (photos.length || videos.length) > 0;
+
       const photoFiles = await uploadFilesToDrive(caseNo, photos, "photo", name, serial);
+      // 照片一傳完就先回寫一次，讓後台能立刻看到縮圖，不用等影片也傳完
+      await ref.update({
+        photoFiles,
+        photoUrls: photoFiles.map(x=>x.thumbnailUrl || x.viewUrl),
+        uploadStatus: videos.length ? "照片已上傳，影片上傳中" : "完成",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
       const videoFiles = await uploadFilesToDrive(caseNo, videos, "video", name, serial);
 
       await ref.update({
-        photoFiles,
         videoFiles,
-        photoUrls: photoFiles.map(x=>x.thumbnailUrl || x.viewUrl),
         videoUrls: videoFiles.map(x=>x.viewUrl),
         uploadStatus: "完成",
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
