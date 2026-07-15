@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#3b82f6" />
   <title>維修自助中心</title>
+  <!-- Google Drive 報修附件上傳版 2026-07-15 -->
   <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
   <style>
@@ -315,7 +316,7 @@
       <div class="success">
         <div class="big">🧾</div>
         <h2>案件已成功送出</h2>
-        <p>客服將依序聯絡你。照片與影片仍請另外透過 LINE 傳送。</p>
+        <p>客服將依序聯絡你，照片與影片已隨案件一併送出。</p>
       </div>
       <div class="summary" id="summary"></div>
       <div class="actions">
@@ -671,7 +672,7 @@
 
 
   // 貼上 Google Apps Script 部署後的「網頁應用程式網址」
-  const DRIVE_UPLOAD_API = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+  const DRIVE_UPLOAD_API = "https://script.google.com/macros/s/AKfycbyzhdvQTeUlo9NdQjozIJn2PON379SrTH-ZbZwwrlQ-Al21MfIZ9EBAtrwFFA5xxMpC/exec";
 
   function setUploadProgress(text, show=true){
     const el = document.getElementById("uploadProgress");
