@@ -725,6 +725,17 @@
     el.classList.toggle("hidden", !show);
   }
 
+  // ===== 防呆：照片/影片還在上傳時，擋掉關閉分頁／返回上一頁 =====
+  let isUploadingMedia = false;
+
+  window.addEventListener("beforeunload", function(e){
+    if(isUploadingMedia){
+      e.preventDefault();
+      e.returnValue = "照片/影片尚未上傳完成，現在離開會遺失附件！";
+      return e.returnValue;
+    }
+  });
+
   function fileToBase64(file){
     return new Promise((resolve, reject)=>{
       const reader = new FileReader();
@@ -851,6 +862,7 @@
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
+      isUploadingMedia = (photos.length || videos.length) > 0;
       const photoFiles = await uploadFilesToDrive(caseNo, photos, "photo");
       const videoFiles = await uploadFilesToDrive(caseNo, videos, "video");
 
@@ -879,6 +891,7 @@
       setUploadProgress("❌ 送出失敗：" + err.message);
       alert("送出失敗：" + err.message);
     }finally{
+      isUploadingMedia = false;
       btn.disabled = false;
       btn.textContent = "送出維修案件";
     }
