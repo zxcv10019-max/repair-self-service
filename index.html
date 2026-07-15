@@ -149,6 +149,11 @@
     .ref-image img{width:100%;height:180px;object-fit:contain;background:#eef3f9;display:block}
     .ref-image figcaption{font-size:12.5px;font-weight:700;padding:6px 8px;text-align:center;background:var(--blue-pale);color:var(--blue-dark)}
     @media(max-width:520px){ .ref-image{margin-left:0} }
+    .ref-image-grid{display:flex;flex-wrap:wrap;gap:12px;margin:-2px 0 4px 34px}
+    .ref-image-grid figure{margin:0;border-radius:12px;overflow:hidden;border:2px solid var(--line);width:160px;flex:0 0 auto}
+    .ref-image-grid img{width:100%;height:120px;object-fit:contain;background:#eef3f9;display:block;cursor:zoom-in}
+    .ref-image-grid figcaption{font-size:12px;font-weight:700;padding:5px 6px;text-align:center;background:var(--blue-pale);color:var(--blue-dark)}
+    @media(max-width:520px){ .ref-image-grid{margin-left:0} }
     .note{
       background:var(--yellow);
       border-radius:15px;padding:14px 16px;line-height:1.65;
@@ -347,9 +352,12 @@
       <div class="success">
         <div class="big">🧾</div>
         <h2>案件已成功送出</h2>
-        <p>客服會優先透過 LINE@ 與你聯繫，即將自動為你開啟 LINE@，若沒有自動跳轉請按下方按鈕。</p>
+        <p>請先複製下方案件摘要，複製完成後會自動為你開啟 LINE@，把摘要貼給客服即可。</p>
       </div>
       <div class="summary" id="summary"></div>
+      <div class="note" style="margin-top:14px;background:#eaf2fe;color:#2563eb">
+        📋 請將此內容複製至 LINE@，方便客服進行查詢，謝謝！
+      </div>
       <div class="actions">
         <button class="btn primary" onclick="copySummary()">複製案件摘要</button>
         <a class="btn outline" id="lineBtn" href="https://lin.ee/vAaW0UF" target="_blank" rel="noopener">前往 LINE@ 客服</a>
@@ -402,7 +410,7 @@
         "將漏水處擦乾後觀察 1～2 分鐘，確認水從哪裡出現。",
         "拍攝一張完整環境照，以及一段可看清漏水位置的影片。",
         "檢查進水開關與水管接頭是否鬆脫。",
-        "若以上皆無法排除，請關閉水源，並附上以上兩張圖（開啟／關閉）供客服確認開關狀態。"
+        "若以上皆無法排除，請關閉水源，點擊「我已完成檢查」繼續進行報修流程。"
       ],
       valveImages:{ index:5, good:VALVE_IMG_1, bad:VALVE_IMG_2, goodLabel:"開啟", badLabel:"關閉" }
     },
@@ -472,9 +480,9 @@
         "請先拔掉插頭，1～2 分鐘後再重新插上觀察看看。有可能是溫度較高或使用冰水，導致製冰時間較長而跳出提示訊號。",
         "確認主機電源已開啟且製冷功能未被關閉。",
         "確認主機四周通風空間是否足夠。",
-        "重新插上後觀察 1～2 小時：期間請不要使用冰水。若這段時間都沒有再跳出異常，即可正常使用；若在沒有使用冰水的情況下又跳出異常，則須拆機回廠檢修。",
+        "重新插上後至少觀察 2 小時：期間請不要使用冰水。若這段時間都沒有再跳出異常，即可正常使用；若在沒有使用冰水的情況下又跳出異常，則須拆機回廠檢修。",
         "留意是否有異常聲音、持續運轉或完全無聲。",
-        "拍攝面板狀態、主機周邊環境與異常聲音影片。"
+        "拍攝冰水開關畫面以及龍頭出水時的影片。"
       ],
       refImages:[
         { index:1, image:GD800_SWITCH_IMG, label:"按鍵型（600或800）龍頭：冰水機開關位置" },
@@ -533,17 +541,18 @@
       icon:"🔌", title:"機器無反應", desc:"完全沒有反應或面板無回應",
       checks:[
         "拔掉插頭，等待 1～3 分鐘後再重新插上。",
+        "檢查其他電器使用同一個插頭是否能正常運作。",
         "檢查漏電斷路器是否已跳脫（可嘗試重新開啟試試看）。",
+        "重插龍頭中繼線。",
         "檢查機器底下是否有滲水或漏水的情形。",
-        "觀察機器是否完全沒有運作，或只是龍頭面板無反應，確認是否有馬達運轉聲。",
-        "重插龍頭中繼線。"
+        "觀察機器是否完全沒有運作，或只是龍頭面板無反應，確認是否有馬達運轉聲。"
       ],
       refImages:[
-        { index:1, image:GD600_BREAKER_IMG, label:"GD-600：漏電斷路器位置" },
-        { index:1, image:GD800_BREAKER_IMG, label:"GD-800：漏電斷路器位置" },
-        { index:1, image:GDCROSS_BREAKER_IMG, label:"GD CROSS：漏電斷路器位置" },
-        { index:1, image:GDSODA_BREAKER_IMG, label:"GD SODA：漏電斷路器位置" },
-        { index:4, image:FAUCET_RELAY_IMG, label:"龍頭中繼線位置" }
+        { index:2, image:GD600_BREAKER_IMG, label:"GD-600：漏電斷路器位置" },
+        { index:2, image:GD800_BREAKER_IMG, label:"GD-800：漏電斷路器位置" },
+        { index:2, image:GDCROSS_BREAKER_IMG, label:"GD CROSS：漏電斷路器位置" },
+        { index:2, image:GDSODA_BREAKER_IMG, label:"GD SODA：漏電斷路器位置" },
+        { index:3, image:FAUCET_RELAY_IMG, label:"龍頭中繼線位置" }
       ]
     },
     noBubble: {
@@ -693,12 +702,17 @@
       }
 
       if(item.refImages){
-        item.refImages.filter(r=>r.index===i).forEach(r=>{
-          const ref=document.createElement("div");
-          ref.className="ref-image";
-          ref.innerHTML=`<figure><img src="${r.image}" alt="${r.label}" onclick="openLightbox('${r.image}')"><figcaption>📷 ${r.label}</figcaption></figure>`;
-          list.appendChild(ref);
-        });
+        const matches = item.refImages.filter(r=>r.index===i);
+        if(matches.length){
+          const wrap=document.createElement("div");
+          wrap.className="ref-image-grid";
+          matches.forEach(r=>{
+            const fig=document.createElement("figure");
+            fig.innerHTML=`<img src="${r.image}" alt="${r.label}" onclick="openLightbox('${r.image}')"><figcaption>📷 ${r.label}</figcaption>`;
+            wrap.appendChild(fig);
+          });
+          list.appendChild(wrap);
+        }
       }
     });
     showOnly("step2");
@@ -985,9 +999,8 @@
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      setUploadProgress("✅ 案件與附件已成功送出，即將前往 LINE@ 客服…");
+      setUploadProgress("✅ 案件與附件已成功送出，請複製下方案件摘要後前往 LINE@ 客服");
       buildSummary(caseNo);
-      setTimeout(()=>{ window.location.href = LINE_OA_URL; }, 1500);
     }catch(err){
       console.error(err);
       if(ref){
@@ -1063,9 +1076,10 @@ ${val("description")}
     const text=document.getElementById("summary").textContent;
     try{
       await navigator.clipboard.writeText(text);
-      alert("案件摘要已複製，可以貼到 LINE 客服。");
+      alert("案件摘要已複製，即將前往 LINE@，請直接貼上給客服。");
+      window.location.href = LINE_OA_URL;
     }catch(e){
-      alert("無法自動複製，請長按或手動選取摘要文字。");
+      alert("無法自動複製，請長按或手動選取摘要文字後再前往 LINE@。");
     }
   }
 
