@@ -71,6 +71,14 @@
     .faq-item.open .faq-item-a{display:block}
     .faq-item-a b{color:var(--blue-dark)}
 
+    .tag-row{display:flex;gap:10px;flex-wrap:wrap;margin:-2px 0 8px 34px}
+    .tag-btn{
+      border:2px solid var(--red);color:var(--red);background:#fff;border-radius:10px;
+      padding:6px 14px;font-weight:700;font-size:13.5px;cursor:pointer;
+    }
+    .tag-btn.selected{background:var(--red);color:#fff}
+    @media(max-width:520px){ .tag-row{margin-left:0} }
+
     .example-link{display:inline-block;margin-top:6px;color:var(--blue-dark);font-weight:700;font-size:13.5px;cursor:pointer;text-decoration:underline}
     .gallery-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:90;align-items:center;justify-content:center;padding:20px}
     .gallery-overlay.open{display:flex}
@@ -257,7 +265,7 @@
     <div class="topbar">
       <button class="menu-icon" onclick="openFaq()">☰</button>
       <div class="brand-pill" onclick="goHome()">💧 維修自助中心</div>
-      <button class="topbar-link" onclick="openFaq()">常見問題</button>
+      <button class="topbar-link" onclick="renderFaqPage()">常見問題</button>
       <a class="topbar-link" href="https://lin.ee/vAaW0UF" target="_blank" rel="noopener" style="text-decoration:none">聯絡我們</a>
     </div>
 
@@ -456,6 +464,12 @@
       <div class="actions"><button class="btn primary" onclick="restart()">回到首頁</button></div>
     </section>
 
+    <section class="panel hidden" id="faqPage">
+      <h2>❓ 常見問題</h2>
+      <div id="faqPageBody"></div>
+      <div class="actions"><button class="btn outline" onclick="restart()">返回首頁</button></div>
+    </section>
+
     <div class="footer">
       本頁提供初步排查，不取代專業維修。涉及拆機、電路、冷媒或高溫零件時，請交由合格人員處理。
     </div>
@@ -553,6 +567,7 @@
         }
       },
       yesNoQuestion:{ index:3 },
+      tagChoice:{ index:4, tags:["只有熱水異常","冷水也異常"] },
       powerSavingQuestion:{
         index:0,
         images:[
@@ -697,7 +712,7 @@
   });
 
   function showOnly(id){
-    ["step1","step2","step3","step4","step5","solved"].forEach(x=>{
+    ["step1","step2","step3","step4","step5","solved","faqPage"].forEach(x=>{
       document.getElementById(x).classList.toggle("hidden",x!==id);
     });
     window.scrollTo({top:0,behavior:"smooth"});
@@ -781,6 +796,21 @@
           </div>
           <div id="errorCodeSolution" class="solution-note hidden"></div>`;
         list.appendChild(block);
+        return;
+      }
+
+      if(item.tagChoice && item.tagChoice.index===i){
+        const tq=item.tagChoice;
+        const label=document.createElement("label");
+        label.className="check";
+        label.innerHTML=`<input type="checkbox"><span>${i+1}. ${text}</span>`;
+        list.appendChild(label);
+
+        const tagButtons=tq.tags.map((t,ti)=>`<button type="button" class="tag-btn" id="tagBtn_${i}_${ti}" onclick="selectTag(${i},${ti})">${t}</button>`).join("");
+        const tagWrap=document.createElement("div");
+        tagWrap.className="tag-row";
+        tagWrap.innerHTML=tagButtons;
+        list.appendChild(tagWrap);
         return;
       }
 
@@ -983,23 +1013,46 @@
   ];
 
   let faqRendered = false;
+  let faqPageRendered = false;
 
-  function renderFaq(){
-    if(faqRendered) return;
-    const body = document.getElementById("faqBody");
+  function renderFaqInto(bodyElId, idPrefix){
+    const body = document.getElementById(bodyElId);
     body.innerHTML = FAQ_ITEMS.map((item, i) => `
-      <div class="faq-item" id="faqItem${i}">
-        <button class="faq-item-q" onclick="toggleFaqItem(${i})">
+      <div class="faq-item" id="${idPrefix}${i}">
+        <button class="faq-item-q" onclick="toggleFaqItem('${idPrefix}${i}')">
           <span>${item.title}</span>
           <span class="arrow">›</span>
         </button>
         <div class="faq-item-a">${item.body.replace(/\n/g, "<br>")}</div>
       </div>`).join("");
+  }
+
+  function renderFaq(){
+    if(faqRendered) return;
+    renderFaqInto("faqBody", "faqItem");
     faqRendered = true;
   }
 
-  function toggleFaqItem(i){
-    const el = document.getElementById("faqItem" + i);
+  function renderFaqPage(){
+    if(!faqPageRendered){
+      renderFaqInto("faqPageBody", "faqPageItem");
+      faqPageRendered = true;
+    }
+    showOnly("faqPage");
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function selectTag(itemIndex, tagIndex){
+    let ti = 0;
+    let btn;
+    while((btn = document.getElementById(`tagBtn_${itemIndex}_${ti}`))){
+      btn.classList.toggle("selected", ti===tagIndex);
+      ti++;
+    }
+  }
+
+  function toggleFaqItem(elId){
+    const el = document.getElementById(elId);
     if(el) el.classList.toggle("open");
   }
 
