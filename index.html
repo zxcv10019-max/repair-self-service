@@ -1043,12 +1043,8 @@
   }
 
   function selectTag(itemIndex, tagIndex){
-    let ti = 0;
-    let btn;
-    while((btn = document.getElementById(`tagBtn_${itemIndex}_${ti}`))){
-      btn.classList.toggle("selected", ti===tagIndex);
-      ti++;
-    }
+    const btn = document.getElementById(`tagBtn_${itemIndex}_${tagIndex}`);
+    if(btn) btn.classList.toggle("selected");
   }
 
   function toggleFaqItem(elId){
@@ -1236,9 +1232,21 @@
         errorCode = "無顯示錯誤代碼";
       }
 
-      ref = repairDb.collection("repairRequests").doc();
-      const caseNo = "R" + new Date().toISOString().slice(0,10).replaceAll("-","")
-        + "-" + ref.id.slice(0,6).toUpperCase();
+      // 案件編號改用「客戶姓名 + 機器序號（或客戶代號）」組成
+      // 同一台機器若再次報修，會透過 caseCounters 這個計數器自動加上 -1、-2……避免覆蓋掉上一筆案件
+      const idBase = (name + (serial || custCode)).replace(/[\/\.\s#\[\]]+/g, "")
+        || ("R" + new Date().toISOString().slice(0,10).replaceAll("-","")
+            + "-" + Math.random().toString(36).slice(2,8).toUpperCase());
+
+      const counterRef = repairDb.collection("caseCounters").doc(idBase);
+      const nth = await repairDb.runTransaction(async (tx) => {
+        const snap = await tx.get(counterRef);
+        const next = (snap.exists ? snap.data().count : 0) + 1;
+        tx.set(counterRef, { count: next });
+        return next;
+      });
+      const caseNo = nth === 1 ? idBase : `${idBase}-${nth - 1}`;
+      ref = repairDb.collection("repairRequests").doc(caseNo);
 
       await ref.set({
         caseNo,
