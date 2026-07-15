@@ -736,7 +736,7 @@
     }
   });
 
-  function fileToBase64(file){
+  function blobToBase64(blob){
     return new Promise((resolve, reject)=>{
       const reader = new FileReader();
       reader.onload = ()=> {
@@ -744,51 +744,90 @@
         resolve(result.includes(",") ? result.split(",")[1] : result);
       };
       reader.onerror = ()=>reject(reader.error || new Error("讀取檔案失敗"));
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(blob);
     });
   }
 
-  async function uploadOneFileToDrive(caseId, file, category){
+  async function postToUploadApi(body, attempts=3){
+    let lastErr;
+    for(let i=0;i<attempts;i++){
+      try{
+        const response = await fetch(DRIVE_UPLOAD_API, {
+          method: "POST",
+          redirect: "follow",
+          headers: {"Content-Type":"text/plain;charset=utf-8"},
+          body: JSON.stringify(body)
+        });
+        const text = await response.text();
+        let result;
+        try{ result = JSON.parse(text); }
+        catch(e){ throw new Error("上傳服務回傳格式錯誤：" + text.slice(0,120)); }
+        if(!result.ok) throw new Error(result.error || "Google Drive 上傳失敗");
+        return result;
+      }catch(err){
+        lastErr = err;
+        if(i < attempts - 1) await new Promise(r=>setTimeout(r, 800 * (i+1))); // 失敗稍等再重試
+      }
+    }
+    throw lastErr;
+  }
+
+  // 每段大小：約 4MB 原始資料（轉 base64 後約 5.3MB），遠低於 Apps Script 單次請求的安全上限，
+  // 也讓瀏覽器一次只需要讀一小段進記憶體，不受檔案總大小影響。
+  const UPLOAD_CHUNK_SIZE = 4 * 1024 * 1024;
+
+  async function uploadOneFileToDrive(caseId, file, category, onProgress){
     if(!DRIVE_UPLOAD_API || DRIVE_UPLOAD_API.includes("PASTE_YOUR")){
       throw new Error("尚未設定 Google Apps Script 網頁應用程式網址");
     }
 
-    // Apps Script 傳輸限制：單檔建議控制在 30MB 內
-    const max = category === "photo" ? 10 * 1024 * 1024 : 30 * 1024 * 1024;
+    const max = 1 * 1024 * 1024 * 1024; // 1GB（照片、影片皆同）
     if(file.size > max){
-      throw new Error(`${file.name} 太大。照片上限 10MB，影片上限 30MB。`);
+      throw new Error(`${file.name} 太大。照片與影片上限皆為 1GB。`);
     }
 
-    const base64 = await fileToBase64(file);
-    const response = await fetch(DRIVE_UPLOAD_API, {
-      method: "POST",
-      redirect: "follow",
-      headers: {"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify({
-        action: "upload",
-        caseId,
-        category,
-        fileName: file.name,
-        mimeType: file.type || "application/octet-stream",
+    const mimeType = file.type || "application/octet-stream";
+    const totalChunks = Math.max(1, Math.ceil(file.size / UPLOAD_CHUNK_SIZE));
+    const uploadId = `${caseId}_${category}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+
+    for(let i=0;i<totalChunks;i++){
+      const start = i * UPLOAD_CHUNK_SIZE;
+      const end = Math.min(file.size, start + UPLOAD_CHUNK_SIZE);
+      const chunkBlob = file.slice(start, end);
+      const base64 = await blobToBase64(chunkBlob);
+
+      await postToUploadApi({
+        action: "uploadChunk",
+        uploadId,
+        chunkIndex: i,
         base64
-      })
+      });
+
+      if(onProgress) onProgress(i + 1, totalChunks);
+    }
+
+    const finalized = await postToUploadApi({
+      action: "finalizeUpload",
+      uploadId,
+      caseId,
+      category,
+      fileName: file.name,
+      mimeType,
+      totalChunks
     });
 
-    const text = await response.text();
-    let result;
-    try{ result = JSON.parse(text); }
-    catch(e){ throw new Error("上傳服務回傳格式錯誤：" + text.slice(0,120)); }
-
-    if(!result.ok) throw new Error(result.error || "Google Drive 上傳失敗");
-    return result.file;
+    return finalized.file;
   }
 
   async function uploadFilesToDrive(caseId, files, category){
     const output = [];
     for(let i=0;i<files.length;i++){
       const file = files[i];
-      setUploadProgress(`正在上傳${category === "photo" ? "照片" : "影片"} ${i+1}/${files.length}：${file.name}`);
-      output.push(await uploadOneFileToDrive(caseId, file, category));
+      const label = category === "photo" ? "照片" : "影片";
+      output.push(await uploadOneFileToDrive(caseId, file, category, (done, total)=>{
+        const pct = Math.round((done/total) * 100);
+        setUploadProgress(`正在上傳${label} ${i+1}/${files.length}：${file.name}（${pct}%）`);
+      }));
     }
     return output;
   }
