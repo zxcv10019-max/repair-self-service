@@ -371,15 +371,13 @@
     noWater: {
       icon:"🚱", title:"不出水／水量很小", desc:"冷水、熱水或常溫水無法正常出水",
       checks:[
-        "先拔掉插頭，等待 30 秒後再重新插上。",
         "確認現場總水源與進水開關已開啟。",
-        "檢查漏水斷路器（防漏電斷路器）是否已跳脫，如已跳脫請按下白色按鈕重新復位。",
-        "重新啟動主機並等待 3～5 分鐘。",
+        "檢查漏水斷路器是否已跳脫，如已跳脫請按下白色按鈕重新復位。",
         "分別測試冷水、熱水與常溫水，記錄哪一種無法出水。",
         "拍攝龍頭操作畫面，以及出水狀況影片。"
       ],
-      valveImages:{ index:1, good:VALVE_IMG_1, bad:VALVE_IMG_2, goodLabel:"正確（開啟）", badLabel:"錯誤（關閉）" },
-      breakerImages:{ index:2, good:BREAKER_IMG, bad:BREAKER_TRIPPED_IMG, goodLabel:"未跳脫（正常）", badLabel:"已跳脫" }
+      valveImages:{ index:0, good:VALVE_IMG_1, bad:VALVE_IMG_2, goodLabel:"正確（開啟）", badLabel:"錯誤（關閉）" },
+      breakerImages:{ index:1, good:BREAKER_IMG, bad:BREAKER_TRIPPED_IMG, goodLabel:"未跳脫（正常）", badLabel:"已跳脫" }
     },
     noHot: {
       icon:"🔥", title:"不加熱／熱水異常", desc:"熱水不熱、加熱不停或顯示異常",
@@ -394,9 +392,15 @@
         "拍攝面板顯示、型號貼紙及操作影片。"
       ],
       specialQuestion:{
-        index:2, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10"],
+        index:2, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10","E11"],
         codeSolutions:{
-          E6:"關閉電源 → 將連接 USB 重新插拔裝至定位 → 開啟電源 → 長按「節電」5 秒開機。"
+          E1:"重插插頭。",
+          E2:"重插插頭。",
+          E3:"重插插頭 → 檢查進水球閥。",
+          E4:"重插插頭 → 檢查進水球閥。",
+          E6:"重插插頭 → 重插龍頭中繼線。",
+          E10:"重插插頭 → 檢查小 T 是否有髒污。",
+          E11:"重插插頭。"
         }
       },
       powerSavingQuestion:{
@@ -436,9 +440,15 @@
         "拍攝面板近照與重新開機後的完整影片。"
       ],
       specialQuestion:{
-        index:1, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10"],
+        index:1, type:"errorCode", codes:["E1","E2","E3","E4","E5","E6","E7","E10","E11"],
         codeSolutions:{
-          E6:"關閉電源 → 將連接 USB 重新插拔裝至定位 → 開啟電源 → 長按「節電」5 秒開機。"
+          E1:"重插插頭。",
+          E2:"重插插頭。",
+          E3:"重插插頭 → 檢查進水球閥。",
+          E4:"重插插頭 → 檢查進水球閥。",
+          E6:"重插插頭 → 重插龍頭中繼線。",
+          E10:"重插插頭 → 檢查小 T 是否有髒污。",
+          E11:"重插插頭。"
         }
       }
     },
