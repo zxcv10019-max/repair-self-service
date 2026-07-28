@@ -570,13 +570,14 @@
         "拍攝龍頭操作畫面，以及出水狀況影片。"
       ],
       valveImages:{ index:0, good:VALVE_IMG_1, bad:VALVE_IMG_2, goodLabel:"開啟", badLabel:"關閉" },
-      breakerImages:{ index:1, good:BREAKER_IMG, bad:BREAKER_TRIPPED_IMG, goodLabel:"未跳脫（正常）", badLabel:"已跳脫" }
+      breakerImages:{ index:1, good:BREAKER_IMG, bad:BREAKER_TRIPPED_IMG, goodLabel:"未跳脫（正常）", badLabel:"已跳脫" },
+      yesNoQuestion:{ index:3 }
     },
     noHot: {
       icon:"🔥", title:"不加熱／熱水異常", desc:"熱水不熱、加熱不停或顯示異常",
       checks:[
-        "確認機器是否在節電狀態。",
-        "是否為節能狀態。",
+        "確認機器是否在待機狀態。",
+        "確認機器是否在節能狀態。",
         "查看面板是否顯示錯誤代碼。",
         "重新設定熱水溫度。",
         "長按「啟用」直到變回溫度顯示。",
@@ -617,8 +618,8 @@
       powerSavingQuestion:{
         index:0,
         images:[
-          { image:SMART_FAUCET_POWER_IMG, full:SMART_FAUCET_POWER_IMG_FULL, label:"觸控型（二代）龍頭：節電狀態（顯示「啟用」）" },
-          { image:GD_POWER_IMG, full:GD_POWER_IMG_FULL, label:"按鍵型（600或800）龍頭：節電狀態（節電圖示亮起）" }
+          { image:SMART_FAUCET_POWER_IMG, full:SMART_FAUCET_POWER_IMG_FULL, label:"觸控型（二代）龍頭：待機狀態（顯示「啟用」）" },
+          { image:GD_POWER_IMG, full:GD_POWER_IMG_FULL, label:"按鍵型（600或800）龍頭：待機狀態（節電圖示亮起）" }
         ],
         solutions:[
           "按鍵型（600或800）龍頭：長按「節電」按鈕，直到面板變回溫度顯示。",
@@ -629,7 +630,8 @@
     noCold: {
       icon:"❄️", title:"不製冷／冰水不冰", desc:"冷水溫度偏高或壓縮機異常",
       checks:[
-        "請先拔掉插頭，1～2 分鐘後再重新插上觀察看看。有可能是溫度較高或使用冰水，導致製冰時間較長而跳出提示訊號。",
+        "請先拔掉插頭，1～2 分鐘後再重新插上觀察看看。有可能是溫度較高或大量使用冰水，導致製冰時間較長而跳出提示訊號。",
+        "檢查漏斷是否跳開。",
         "確認主機電源已開啟且製冷功能未被關閉。",
         "確認主機四周通風空間是否足夠。",
         "重新插上後至少觀察 2 小時：期間請不要使用冰水。若這段時間都沒有再跳出異常，即可正常使用；若在沒有使用冰水的情況下又跳出異常，則須拆機回廠檢修。",
@@ -637,8 +639,12 @@
         "拍攝冰水開關畫面以及龍頭出水時的影片。"
       ],
       refImages:[
-        { index:1, image:GD800_SWITCH_IMG, label:"按鍵型（600或800）龍頭：冰水機開關位置" },
-        { index:1, image:GEN2_SWITCH_IMG, label:"觸控型（二代）龍頭：面板「冰水機/ON」開關位置" }
+        { index:1, image:GD600_BREAKER_IMG, label:"GD-600：漏電斷路器位置" },
+        { index:1, image:GD800_BREAKER_IMG, label:"GD-800：漏電斷路器位置" },
+        { index:1, image:GDCROSS_BREAKER_IMG, label:"GD CROSS：漏電斷路器位置" },
+        { index:1, image:GDSODA_BREAKER_IMG, label:"GD SODA：漏電斷路器位置" },
+        { index:2, image:GD800_SWITCH_IMG, label:"按鍵型（800）龍頭：冰水機開關位置" },
+        { index:2, image:GEN2_SWITCH_IMG, label:"觸控型（二代）龍頭：面板「冰水機/ON」開關位置" }
       ]
     },
     code: {
@@ -720,7 +726,8 @@
       ],
       refImages:[
         { index:0, image:CO2_GAUGE_IMG, label:"CO2 壓力表位置（右側錶頭歸零代表沒氣）" }
-      ]
+      ],
+      tagChoice:{ index:3, tags:["只出氣不出水","氣與水皆不出"] }
     },
     frequentTrip: {
       icon:"⚡", title:"頻繁跳電", desc:"機器經常跳脫漏電斷路器",
@@ -1020,7 +1027,7 @@
   const FAQ_ITEMS = [
     {
       title: "機器嗶嗶叫（閃爍紅藍燈）",
-      body: "機器自前次歸零／初安裝後會自動計算 12 個月進行濾心提醒（非偵測濾心狀況）。\n\n歸零（取消提醒）方式：\n・GD600／GD800—長按「溫度」\n・智慧型龍頭（GD CROSS／GD SODA）—點擊龍頭螢幕設定→維護設定→957223#ENTER→濾心更換→濾心歸零\n・IZERO RO 機—兩支濾芯中間有一個小孔，使用 SIM 卡針／迴紋針戳進去長按，直到機器發出嗶嗶聲"
+      body: "機器自前次歸零／初安裝後會自動計算 12 個月進行濾心提醒（非偵測濾心狀況）。\n\n歸零（取消提醒）方式：\n・GD600／GD800—長按「溫度」\n・智慧型龍頭（GD CROSS／GD SODA）—點擊龍頭螢幕設定→維護設定→xxx(請洽總公司或經銷商取得密碼)→濾心更換→濾心歸零\n・IZERO RO 機—兩支濾芯中間有一個小孔，使用 SIM 卡針／迴紋針戳進去長按，直到機器發出嗶嗶聲"
     },
     {
       hidden: true,
