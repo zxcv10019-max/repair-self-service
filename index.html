@@ -210,6 +210,34 @@
       background:var(--yellow);
       border-radius:15px;padding:14px 16px;line-height:1.65;
     }
+    .danger-card{
+      background:#FFF5F5;
+      border-left:8px solid #E53935;
+      border-radius:14px;
+      padding:16px 20px 18px;
+      margin-bottom:18px;
+      box-shadow:var(--shadow);
+      animation:dangerPulse 1.8s ease-in-out 3;
+    }
+    @keyframes dangerPulse{
+      0%{transform:scale(1);}
+      50%{transform:scale(1.015);}
+      100%{transform:scale(1);}
+    }
+    .danger-head{
+      font-size:17px;font-weight:800;color:#E53935;margin:0 0 10px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .danger-lead{margin:10px 0 6px;font-weight:700;font-size:14.5px;color:var(--text)}
+    .danger-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+    .danger-list li{font-size:14.5px;color:var(--text);display:flex;align-items:center;gap:8px}
+    .danger-btn{
+      display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+      background:#E53935;color:#fff;font-weight:800;padding:11px 20px;
+      border-radius:12px;text-decoration:none;font-size:14.5px;border:none;cursor:pointer;
+    }
+    .danger-btn:hover{background:#c62f2a}
+    @media(max-width:520px){ .danger-card{padding:14px 16px 16px} }
     .field{margin:14px 0}
     .field label{display:block;font-weight:700;margin-bottom:7px}
     .field input,.field textarea,.field select{
@@ -292,7 +320,22 @@
     <h1 class="hero-title">維修自助中心</h1>
     <p class="hero-sub">請依照畫面一步一步確認。若仍無法排除，系統會幫你整理故障資料，方便客服更快判斷。</p>
 
-    <div class="note" id="safetyNote" style="margin-bottom:18px"><b>（這個很重要）</b> ⚠️ 若現場有大量漏水、焦味、冒煙或頻繁跳電，請先立即關閉電源與水源，不要繼續操作。</div>
+    <div class="danger-card" id="safetyNote">
+      <div class="danger-head">🚨 安全警示</div>
+      <p class="danger-lead">若機器有下列任一情況：</p>
+      <ul class="danger-list">
+        <li>💧 大量漏水</li>
+        <li>🔥 聞到燒焦味</li>
+        <li>💨 機器冒煙</li>
+      </ul>
+      <p class="danger-lead">請立即：</p>
+      <ul class="danger-list">
+        <li>🔌 關閉電源</li>
+        <li>🚰 關閉水源</li>
+        <li>⛔ 請勿繼續操作</li>
+      </ul>
+      <a class="danger-btn" href="https://lin.ee/vAaW0UF" target="_blank" rel="noopener">📞 聯絡客服</a>
+    </div>
 
     <div class="hero-row">
       <div class="feature-list">
