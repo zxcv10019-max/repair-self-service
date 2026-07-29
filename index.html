@@ -1121,7 +1121,10 @@ const GEN1_POWER_SAVING_IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAA
 
   function selectTag(itemIndex, tagIndex){
     const btn = document.getElementById(`tagBtn_${itemIndex}_${tagIndex}`);
-    if(btn) btn.classList.toggle("selected");
+    if(!btn) return;
+    const wasSelected = btn.classList.contains("selected");
+    document.querySelectorAll(`[id^="tagBtn_${itemIndex}_"]`).forEach(b=>b.classList.remove("selected"));
+    if(!wasSelected) btn.classList.add("selected");
   }
 
   function toggleFaqItem(elId){
